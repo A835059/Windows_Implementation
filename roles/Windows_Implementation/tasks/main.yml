@@ -1,1 +1,85 @@
+---
 
+- name: Manage Environmental Variable
+  win_path:
+    name: "{{ env_var }}"
+    elements: "{{ path }}"
+    scope: "{{ scope }}"
+    state: "{{ env_state }}"
+  tags:
+    - env_variable
+    
+    
+- name: Execute command 
+  win_shell: "{{ item }}"
+  register: command_output
+  with_items: "{{ commands }}"
+  tags:
+    - execute_cmd
+    
+    
+- name: Set timezone 
+  win_timezone:
+    timezone: "{{ standard_time_zone }}"
+  notify:
+    - Reboot the machine
+  tags: 
+    - timezone
+    
+    
+- name: Making entry in host 
+  win_lineinfile:
+    path: "{{ host_path }}"
+    line: "{{ line_to_be_insert }}" 
+    state: "{{ state }}"
+  notify:
+    - Reboot the machine
+  tags:
+    - hostfile
+    
+    
+- block:
+
+    - name: Initialize the partition
+      win_shell: "Initialize-Disk -Number {{ unitNumber }}"
+      register: win_shell_output
+      ignore_errors: yes
+
+
+    - name: Create a partition
+      win_partition:
+        drive_letter: P
+        partition_size: -1
+        disk_number: "{{ unitNumber }}"
+      ignore_errors: yes
+      register: win_partition_status
+      when: win_shell_output is succeeded
+      
+      
+    - name: Format the partitionand label it
+      win_format:
+        drive_letter: P
+        file_system: ntfs
+        new_label: Formatted
+        full: True
+        force: yes
+      ignore_errors: yes
+      register: win_format_status
+      when: win_partition_status is succeeded
+      
+      
+    - name: Set P drive as pagefile, override if exists
+      win_pagefile:
+        drive: P
+        initial_size: "{{ page_size }}"
+        maximum_size: "{{ page_size }}"
+        state: present
+      register: setdrive_output
+      when: win_format_status is succeeded
+      
+  tags:
+    - pagefile 
+    
+    
+    
+    
