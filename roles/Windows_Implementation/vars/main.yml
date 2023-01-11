@@ -1,1 +1,16 @@
+env_var:
+path:
+scope:
+env_state:
+
+commands: 
+
+standard_time_zone:
+
+host_path: C:\Windows\System32\Drivers\etc\hosts
+line_to_be_insert:
+state:
+
+unitNumber:
+page_size:
 
