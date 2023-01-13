@@ -81,5 +81,49 @@
     - pagefile 
     
     
+- block:
+
+    - name: Get service status for specific services and export into csv file
+      win_shell: |
+        $File_Path_To_be_saved= "C:/Users/Administrator/Desktop/Reports/Service_Status_Report.csv"
+        $status=Get-Service {{item}} -ComputerName $env:COMPUTERNAME | Select Name, DisplayName, Status 
+        $status |Export-Csv -Path $File_Path_To_be_saved -NoTypeInformation -Append -Force
+        $status 
+      with_items: 
+        - "{{ name |list }}"
+      ignore_errors: yes
+      register: status_output
+
+
+    - name: Delete duplicate entries and headers
+      shell: awk 'FNR==1 && NR!=1{next;}{print}' "{{File_Path_To_be_saved}}" > "{{File_Path_To_be_saved}}"Final_Service_Status_Report.csv
+      delegate_to: localhost
+      register: final_output
+      when: status_output is succeeded
+      
+      
+    - name: send report by email
+      mail:
+       # host: 192.168.82.78 
+        port: 25  
+        subject: "Service Status Report {{ ansible_date_time.date }}"
+        body: |
+            Hello Team,
+              Service Status Report attached
+              
+            Regards,
+            Ansible Automation
+            
+            NOTE- DO NOT REPLY TO THIS MAIL
+        attach: "{{output_exe_node}}Final_Service_Status_Report.csv"
+        from: "{{ mail_from }}"
+        to: "{{ mail_to }}"
+        charset: utf8  
+      when: mail_to is defined
+      delegate_to: localhost
+      run_once: true
+      
+  tags:
+    - service    
     
     
