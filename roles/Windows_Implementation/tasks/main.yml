@@ -21,8 +21,10 @@
 - name: Set timezone 
   win_timezone:
     timezone: "{{ standard_time_zone }}"
-  notify:
-    - Reboot the machine
+- debug:
+    msg: "{{ Server restart is needed }}"
+  #notify:
+   # - Reboot the machine
   tags: 
     - timezone
     
@@ -32,8 +34,8 @@
     path: "{{ host_path }}"
     line: "{{ line_to_be_insert }}" 
     state: "{{ state }}"
-  notify:
-    - Reboot the machine
+- debug:
+    msg: "{{ Server restart is needed }}"
   tags:
     - hostfile
     
