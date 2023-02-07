@@ -1,4 +1,5 @@
 ---
+# tasks file for Windows_Implementation
 
 - name: Manage Environmental Variable
   win_path:
@@ -8,124 +9,36 @@
     state: "{{ env_state }}"
   tags:
     - env_variable
-    
-    
-- name: Execute command 
+
+
+- name: Execute command
   win_shell: "{{ item }}"
   register: command_output
   with_items: "{{ commands }}"
   tags:
     - execute_cmd
-    
-    
-- name: Set timezone 
+
+
+- name: Set timezone
   win_timezone:
     timezone: "{{ standard_time_zone }}"
-- debug:
-    msg: "{{ Server restart is needed }}"
-  #notify:
-   # - Reboot the machine
-  tags: 
+  tags:
     - timezone
-    
-    
-- name: Making entry in host 
+
+- debug:
+    msg: "Server restart is needed"
+
+
+- name: Making entry in host
   win_lineinfile:
     path: "{{ host_path }}"
-    line: "{{ line_to_be_insert }}" 
+    line: "{{ line_to_be_insert }}"
     state: "{{ state }}"
-- debug:
-    msg: "{{ Server restart is needed }}"
   tags:
     - hostfile
-    
-    
-- block:
 
-    - name: Initialize the partition
-      win_shell: "Initialize-Disk -Number {{ unitNumber }}"
-      register: win_shell_output
-      ignore_errors: yes
+- debug:
+    msg: "Server restart is needed"
 
-
-    - name: Create a partition
-      win_partition:
-        drive_letter: P
-        partition_size: -1
-        disk_number: "{{ unitNumber }}"
-      ignore_errors: yes
-      register: win_partition_status
-      when: win_shell_output is succeeded
-      
-      
-    - name: Format the partitionand label it
-      win_format:
-        drive_letter: P
-        file_system: ntfs
-        new_label: Formatted
-        full: True
-        force: yes
-      ignore_errors: yes
-      register: win_format_status
-      when: win_partition_status is succeeded
-      
-      
-    - name: Set P drive as pagefile, override if exists
-      win_pagefile:
-        drive: P
-        initial_size: "{{ page_size }}"
-        maximum_size: "{{ page_size }}"
-        state: present
-      register: setdrive_output
-      when: win_format_status is succeeded
-      
-  tags:
-    - pagefile 
-    
-    
-- block:
-
-    - name: Get service status for specific services and export into csv file
-      win_shell: |
-        $File_Path_To_be_saved= "C:/Users/Administrator/Desktop/Reports/Service_Status_Report.csv"
-        $status=Get-Service {{item}} -ComputerName $env:COMPUTERNAME | Select Name, DisplayName, Status 
-        $status |Export-Csv -Path $File_Path_To_be_saved -NoTypeInformation -Append -Force
-        $status 
-      with_items: 
-        - "{{ name |list }}"
-      ignore_errors: yes
-      register: status_output
-
-
-    - name: Delete duplicate entries and headers
-      shell: awk 'FNR==1 && NR!=1{next;}{print}' "{{File_Path_To_be_saved}}" > "{{File_Path_To_be_saved}}"Final_Service_Status_Report.csv
-      delegate_to: localhost
-      register: final_output
-      when: status_output is succeeded
-      
-      
-    - name: send report by email
-      mail:
-       # host: 192.168.82.78 
-        port: 25  
-        subject: "Service Status Report {{ ansible_date_time.date }}"
-        body: |
-            Hello Team,
-              Service Status Report attached
-              
-            Regards,
-            Ansible Automation
-            
-            NOTE- DO NOT REPLY TO THIS MAIL
-        attach: "{{output_exe_node}}Final_Service_Status_Report.csv"
-        from: "{{ mail_from }}"
-        to: "{{ mail_to }}"
-        charset: utf8  
-      when: mail_to is defined
-      delegate_to: localhost
-      run_once: true
-      
-  tags:
-    - service    
     
     
