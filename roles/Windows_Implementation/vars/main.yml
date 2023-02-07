@@ -1,17 +1,18 @@
-env_var:
-path:
-scope:
-env_state:
+---
+# vars file for Windows_Implementation
 
-commands: 
+env_var: CLASSPATH                                 # Target path environment variable name
+path: C:\Program Files\MyJavaThing                 # A single path element, or a list of path elements to add or remove
+scope: user                                        # The level at which the environment variable specified should be managed
+env_state: absent                                  # Whether the path elements specified in elements should be present or absent
 
-standard_time_zone:
 
-host_path: C:\Windows\System32\Drivers\etc\hosts
-line_to_be_insert:
-state:
+commands:                                          # Enter commands to be executed
+    - echo %HOMEDIR%
+    - echo %DIRECTORY%
 
-unitNumber:
-page_size:
+standard_time_zone: Central Standard Time          # Timezone to set to
 
-File_Path_To_be_saved: C:/Users/Administrator/Desktop/Reports/Service_Status_Report.csv
+host_path: C:\Windows\System32\Drivers\etc\hosts   # The path of the file to be modified
+line_to_be_insert: 'name=Test'                     # The line to insert/replace into the file
+state: present                                     # Whether the line should be there or not
